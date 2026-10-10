@@ -1,0 +1,239 @@
+﻿@model IEnumerable<KinopoiskClone.Models.Movie>
+
+@{
+    ViewData["Title"] = "КиноПоиск 2.0";
+    Layout = "_Layout";
+}
+
+<style>
+    :root {
+        --kp-orange: #f60;
+        --kp-orange-hover: #ff7b00;
+        --bg-dark: #0f0f0f;
+        --bg-card: #1c1c1c;
+        --text-light: #ffffff;
+        --text-muted: #999999;
+    }
+
+    body {
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .kp-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    /* Заголовок */
+    .header-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 30px;
+        animation: fadeInDown 0.8s ease;
+    }
+    .header-title span { color: var(--kp-orange); }
+
+    /* Форма добавления (Glassmorphism) */
+    .add-movie-form {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 25px;
+        border-radius: 16px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 50px;
+        animation: fadeIn 1.2s ease;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .add-movie-form input {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 12px 18px;
+        border-radius: 10px;
+        outline: none;
+        transition: 0.3s;
+        flex: 1 1 200px;
+    }
+
+    .add-movie-form input:focus {
+        border-color: var(--kp-orange);
+        box-shadow: 0 0 12px rgba(255, 102, 0, 0.3);
+    }
+
+    .btn-orange {
+        background: var(--kp-orange);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .btn-orange:hover {
+        background: var(--kp-orange-hover);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(255, 102, 0, 0.4);
+    }
+
+    /* Сетка фильмов */
+    .movies-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 30px;
+    }
+
+    /* Карточка фильма */
+    .movie-card {
+        background: var(--bg-card);
+        border-radius: 14px;
+        overflow: hidden;
+        position: relative;
+        transition: all 0.4s ease;
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 0.7s ease forwards;
+    }
+
+    /* Каскадная задержка анимации для первых элементов */
+    .movie-card:nth-child(1) { animation-delay: 0.1s; }
+    .movie-card:nth-child(2) { animation-delay: 0.2s; }
+    .movie-card:nth-child(3) { animation-delay: 0.3s; }
+    .movie-card:nth-child(4) { animation-delay: 0.4s; }
+    .movie-card:nth-child(5) { animation-delay: 0.5s; }
+    .movie-card:nth-child(n+6) { animation-delay: 0.6s; }
+
+    .movie-card:hover {
+        transform: translateY(-12px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+    }
+
+    .movie-poster {
+        width: 100%;
+        height: 340px;
+        object-fit: cover;
+        transition: 0.5s;
+    }
+
+    .movie-card:hover .movie-poster {
+        filter: brightness(0.6);
+    }
+
+    .movie-info {
+        padding: 18px;
+        position: relative;
+    }
+
+    .movie-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0 0 5px 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .movie-year {
+        color: var(--kp-orange);
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .movie-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Кнопка удаления */
+    .delete-form {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        opacity: 0;
+        transform: scale(0.5);
+        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 2;
+    }
+
+    .movie-card:hover .delete-form {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .btn-delete {
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s;
+        backdrop-filter: blur(5px);
+    }
+
+    .btn-delete:hover {
+        background: #ff2a2a;
+        transform: rotate(90deg);
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+    }
+
+    /* Анимации */
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    @@keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="kp-container">
+    <h1 class="header-title">Кино<span>Поиск</span></h1>
+
+    <!-- Форма добавления -->
+    <form asp-action="Add" method="post" class="add-movie-form">
+        <input type="text" name="Title" placeholder="Название фильма" required />
+        <input type="number" name="Year" placeholder="Год (напр. 2024)" required />
+        <input type="url" name="PosterUrl" placeholder="URL картинки-постера" required />
+        <input type="text" name="Description" placeholder="Короткое описание" required />
+        <button type="submit" class="btn-orange">Добавить фильм</button>
+    </form>
+
+
+    <div class="movies-grid">
+        @foreach (var movie in Model)
+        {
+            <div class="movie-card">
+                <img src="@movie.PosterUrl" alt="@movie.Title" class="movie-poster" onerror="this.src='https://placehold.co/300x450/1c1c1c/f60?text=Нет+Постера'" />
+                
+                <!-- Форма удаления -->
+                <form asp-action="Delete" method="post" class="delete-form">
+                    <!-- ИЗМЕНЕНИЕ ЗДЕСЬ: убрали type="hidden", оставили только input с name="id" -->
+                    <input type="hidden" name="id" value="@movie.Id" />
+                    <button type="submit" class="btn-delete" title="Удалить фильм">×</button>
+                </form>
+
+                <div class="movie-info">
+                    <h3 class="movie-title">@movie.Title</h3>
+                    <div class="movie-year">@movie.Year</div>
+                    <p class="movie-desc">@movie.Description</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
